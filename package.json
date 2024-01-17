@@ -1,6 +1,6 @@
 {
   "name": "react-image-particles",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "Create interactive particle effects from an image.",
   "main": "./build/index.js",
   "scripts": {
@@ -22,13 +22,9 @@
   "author": "Samuel Henderson",
   "license": "ISC",
   "dependencies": {
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
+    "react-scripts": "5.0.1"
   },
   "devDependencies": {
     "webpack-cli": "^5.1.4"
