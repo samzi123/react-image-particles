@@ -1,7 +1,7 @@
 # react-image-particles
 A React component that converts any image into interactive particles.
 
-![Example](demo.gif)
+![Example](https://github.com/samzi123/react-image-particles/blob/main/demo.gif?raw=true)
 
 ## Installation
 Using npm:
@@ -30,11 +30,11 @@ export default App;
 
 ## Props
 The `<ImageToParticle>` component accepts the following props:
-- `path` (string) *required*: The image to apply the effect to.
-- `width` (number) *optional*: The width of the image canvas in pixels.
-- `height` (number) *optional*: The height of the image canvas in pixels.
-- `particleSize` (number) *optional*: The size of the particles in pixels.
-- `numParticles` (number) *optional*: The number of particles to use. Defaults to the number of pixels in the image.
+- `path` (string) *required*: Image to apply the effect to.
+- `width` (number) *optional*: Width of the image canvas in pixels.
+- `height` (number) *optional*: Height of the image canvas in pixels.
+- `particleSize` (number) *optional*: Size of each particle in pixels.
+- `numParticles` (number) *optional*: Number of particles to use. Defaults to the number of pixels in the image.
 
 ## Author
 Samuel Henderson
