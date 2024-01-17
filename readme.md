@@ -1,6 +1,8 @@
 # react-image-particles
 A React component that converts any image into interactive particles.
 
+![Example](demo.gif)
+
 ## Installation
 Using npm:
 `npm install react-image-particles`
@@ -38,7 +40,7 @@ The `<ImageToParticle>` component accepts the following props:
 Samuel Henderson
 
 Contributions are welcome!
-GitHub repo: ...
+Repo: https://github.com/samzi123/react-image-particles
 
 ## License
 MIT

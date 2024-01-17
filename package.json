@@ -1,7 +1,7 @@
 {
   "name": "react-image-particles",
   "version": "1.0.0",
-  "description": "Create cool particle effects from an image.",
+  "description": "Create interactive particle effects from an image.",
   "main": "./build/index.js",
   "scripts": {
     "build": "webpack"
