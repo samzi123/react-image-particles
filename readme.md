@@ -1,7 +1,7 @@
 # react-image-particles
 A React component that converts any image into interactive particles.
 
-![Example](https://github.com/samzi123/react-image-particles/blob/main/demo.gif?raw=true)
+![Example](https://instagram-caption-tool.s3.amazonaws.com/demo.gif)
 
 ## Installation
 Using npm:
