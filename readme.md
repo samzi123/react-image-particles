@@ -21,6 +21,7 @@ const App = () => {
       path="path/to/image"
       width={500}
       height={500}
+      numParticles={1000}
     />
   );
 };
