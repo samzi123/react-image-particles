@@ -2,6 +2,21 @@ import React, { useRef, useEffect } from "react";
 
 export default function ImageToParticle({ path, width=200, height=200, particleSize=2, numParticles=null }) {
     const canvasAsRef = useRef(null);
+    // set the radius based on the image size because the image may be resized and we want the effect to scale accordingly
+    const mouseRadius = (width + height) / 12;
+
+    // use spacial partitioning grid to speed up lookup of particles close to the mouse
+    const positionGrid = [];
+    const positionGridRows = Math.ceil(height / mouseRadius);
+    const positionGridCols = Math.ceil(width / mouseRadius);
+    
+    for (let i = 0; i < positionGridRows; i++) {
+        positionGrid[i] = [];
+        for (let j = 0; j < positionGridCols; j++) {
+            // todo: use a linked list instead of a set
+            positionGrid[i][j] = new Set();
+        }
+    }
 
     useEffect(() => {
         const canvas = canvasAsRef.current;
@@ -9,7 +24,7 @@ export default function ImageToParticle({ path, width=200, height=200, particleS
         
         // whether to use the number of particles specified in NUM_PARTICLES or the number of pixels in the image
         const IS_NUM_PARTICLES_SET = numParticles !== null;
-        const NUM_PARTICLES = numParticles !== null ? numParticles : 1000;
+        var NUM_PARTICLES = numParticles !== null ? numParticles : 1000;
 
         // if we don't scale back the image back slightly, the particles disappear at the edges of the canvas
         const imageOffsetX = 0.2;
@@ -23,12 +38,10 @@ export default function ImageToParticle({ path, width=200, height=200, particleS
         let mouse = {
             x: null,
             y: null,
-            radius: 100,
+            radius: mouseRadius,
         }
         
         window.addEventListener('mousemove', function(event){
-            // mouse.x = event.x + canvas.clientLeft / 2;
-            // mouse.y = event.y + canvas.clientTop / 2;
             const rect = canvas.getBoundingClientRect();
 
             mouse.x = event.clientX - rect.left
@@ -37,9 +50,6 @@ export default function ImageToParticle({ path, width=200, height=200, particleS
         });
         
         function drawImage(data) {
-            // set the radius based on the image size because the image may be resized and we want the effect to scale accordingly
-            mouse.radius = (width + height) / 12;
-            
             class Particle {
                 constructor(x, y, color, size) {
                     this.x = x;
@@ -60,7 +70,7 @@ export default function ImageToParticle({ path, width=200, height=200, particleS
                 }
         
                 update() {
-                    // collision detection
+                    // collision detection with mouse
                     let dx = mouse.x - this.x;
                     let dy = mouse.y - this.y;
                     let distance = Math.sqrt(dx * dx + dy * dy);
@@ -72,29 +82,24 @@ export default function ImageToParticle({ path, width=200, height=200, particleS
                     let directionX = forceDirectionX * force * this.density;
                     let directionY = forceDirectionY * force * this.density;
         
-                    // add force to particle
+                    // add force to particle if it is close to the mouse
                     if (distance < mouse.radius + this.size && mouseMoved) {
                         this.x -= directionX;
                         this.y -= directionY;
-                    } else {
-                        // move particle back to original position
-                        if (this.x !== this.baseX) {
-                            let dx = this.x - this.baseX;
-                            this.x -= dx / 15;
-                        }
-                        if (this.y !== this.baseY) {
-                            let dy = this.y - this.baseY;
-                            this.y -= dy / 15;
-                        }
                     }
-        
-                    this.draw()
+                }
+
+                // apply force to move particle back to original position
+                applyForceBackToOriginalPosition() {
+                    this.x -= (this.x - this.baseX) / 15;
+                    this.y -= (this.y - this.baseY) / 15;
                 }
             }
         
             function init() {
                 particleArr = [];
                 const numPixelsWithPositiveAlpha = data.data.filter((_, i) => i % 4 === 3 && data.data[i] > 128).length;
+                NUM_PARTICLES = Math.min(NUM_PARTICLES, numPixelsWithPositiveAlpha);
         
                 for (let y = 0, y2 = data.height; y < y2; y++) {
                     for (let x = 0, x2 = data.width; x < x2; x++) {
@@ -108,8 +113,13 @@ export default function ImageToParticle({ path, width=200, height=200, particleS
                             const positionY = (canvas.height * (imageOffsetY / 2)) + Math.floor((y / data.height) * canvas.height) * (1 - imageOffsetY);
                             const index = (y * 4 * data.width) + (x * 4);
         
-                            let color = "rgb(" + data.data[index] + "," + data.data[index + 1] + "," + data.data[index + 2] + ")";
+                            const color = "rgb(" + data.data[index] + "," + data.data[index + 1] + "," + data.data[index + 2] + ")";
                             particleArr.push(new Particle(positionX, positionY, color, particleSize));
+
+                            // add particle to spatial optimization grid
+                            const row = Math.floor(positionY / mouseRadius);
+                            const col = Math.floor(positionX / mouseRadius);
+                            positionGrid[row][col].add(particleArr[particleArr.length - 1]);
                         }
                     }
                 }
@@ -119,21 +129,39 @@ export default function ImageToParticle({ path, width=200, height=200, particleS
                 requestAnimationFrame(animate);
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-                for (let i = 0; i < particleArr.length; i++) {
-                    particleArr[i].update();
+                // only draw particles that are close to the mouse
+                const mouseRow = Math.floor(mouse.y / mouseRadius);
+                const mouseCol = Math.floor(mouse.x / mouseRadius);
+                const rowColOffsets = [[0,1], [0,-1], [1,1], [1,-1], [1,0], [-1,0], [0,0]];
+                
+                // loop through all cells around the mouse and update the particles in those cells
+                for (let i = 0; i < rowColOffsets.length; ++i) {
+                    const particleRow = mouseRow + rowColOffsets[i][0];
+                    const particleCol = mouseCol + rowColOffsets[i][1];
+                    
+                    if (particleRow < 0 || particleRow >= positionGridRows || particleCol < 0 || particleCol >= positionGridCols)
+                    continue;
+                
+                    for (const particle of positionGrid[particleRow][particleCol]) {
+                        particle.update();
+                    }
                 }
-        
+            
+                // draw all particles
+                for (let i = 0; i < particleArr.length; i++) {
+                    // if the particle has moved away from its original position, move it back
+                    if (particleArr[i].x !== particleArr[i].baseX || particleArr[i].y !== particleArr[i].baseY) {
+                        particleArr[i].applyForceBackToOriginalPosition();
+                    }
+
+                    particleArr[i].draw();
+                }
+
                 mouseMoved = false;
             }
         
             init();
             animate();
-        
-            // window.addEventListener('resize', function(){
-            //     canvas.width = width;
-            //     canvas.height = height;
-            //     init();
-            // });
         }
         
         /** @param {ImageBitmap} bitmap */
