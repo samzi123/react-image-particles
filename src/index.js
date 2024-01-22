@@ -4,6 +4,7 @@ export default function ImageToParticle({ path, width=200, height=200, particleS
     const canvasAsRef = useRef(null);
     // set the radius based on the image size because the image may be resized and we want the effect to scale accordingly
     const mouseRadius = (width + height) / 12;
+    const maxDistanceSquared = mouseRadius * mouseRadius;
 
     // use spacial partitioning grid to speed up lookup of particles close to the mouse
     const positionGrid = [];
@@ -71,19 +72,19 @@ export default function ImageToParticle({ path, width=200, height=200, particleS
         
                 update() {
                     // collision detection with mouse
-                    let dx = mouse.x - this.x;
-                    let dy = mouse.y - this.y;
-                    let distance = Math.sqrt(dx * dx + dy * dy);
-                    let forceDirectionX = dx / distance;
-                    let forceDirectionY = dy / distance;
-                    let maxDistance = mouse.radius;
-                    let force = (maxDistance - distance) / maxDistance;
-        
-                    let directionX = forceDirectionX * force * this.density;
-                    let directionY = forceDirectionY * force * this.density;
-        
+                    const dx = mouse.x - this.x;
+                    const dy = mouse.y - this.y;
+                    const distanceSquared = Math.abs(dx * dx + dy * dy);
+
                     // add force to particle if it is close to the mouse
-                    if (distance < mouse.radius + this.size && mouseMoved) {
+                    if (distanceSquared < maxDistanceSquared + this.size && mouseMoved) {
+                        const forceDirectionX = dx / mouseRadius;
+                        const forceDirectionY = dy / mouseRadius;
+                        const force = (maxDistanceSquared - distanceSquared) / maxDistanceSquared;
+            
+                        const directionX = forceDirectionX * force * this.density;
+                        const directionY = forceDirectionY * force * this.density;
+        
                         this.x -= directionX;
                         this.y -= directionY;
                     }
@@ -132,7 +133,7 @@ export default function ImageToParticle({ path, width=200, height=200, particleS
                 // only draw particles that are close to the mouse
                 const mouseRow = Math.floor(mouse.y / mouseRadius);
                 const mouseCol = Math.floor(mouse.x / mouseRadius);
-                const rowColOffsets = [[0,1], [0,-1], [1,1], [1,-1], [1,0], [-1,0], [0,0]];
+                const rowColOffsets = [[0,1], [0,-1], [1,1], [1,-1], [1,0], [-1,0], [0,0], [-1,-1], [-1,1]];
                 
                 // loop through all cells around the mouse and update the particles in those cells
                 for (let i = 0; i < rowColOffsets.length; ++i) {
