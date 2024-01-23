@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from "react";
 
-export default function ImageToParticle({ path, width=200, height=200, particleSize=2, numParticles=null }) {
+export default function ImageToParticle({ path, width=200, height=200, particleSize=2, numParticles=null, children }) {
     const canvasAsRef = useRef(null);
     // set the radius based on the image size because the image may be resized and we want the effect to scale accordingly
     const mouseRadius = (width + height) / 12;
@@ -39,9 +39,6 @@ export default function ImageToParticle({ path, width=200, height=200, particleS
 
         const canvas = canvasAsRef.current;
         const ctx = canvas.getContext("2d");
-
-        // set of particles that haven't been assigned a valid set, usually because of negative indices
-        const particlesWithNoPositionCell = new Set();
         
         // whether to use the number of particles specified in NUM_PARTICLES or the number of pixels in the image
         const IS_NUM_PARTICLES_SET = numParticles !== null;
