@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from "react";
 
-export default function ImageToParticle({ path, width=200, height=200, particleSize=2, numParticles=null, children }) {
+export default function ImageToParticle({ path, width=200, height=200, particleSize=2, numParticles=null }) {
     const canvasAsRef = useRef(null);
     // set the radius based on the image size because the image may be resized and we want the effect to scale accordingly
     const mouseRadius = (width + height) / 12;
